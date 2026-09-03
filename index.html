@@ -3,71 +3,331 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily English Tutor</title>
+<title>AI Smart English Tutor</title>
 <style>
- body { font-family: sans-serif; background: #f6f5ff; padding: 20px; }
-.card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
- h2 { margin-top: 0; }
-.pattern { background: #eef2ff; padding: 8px 12px; border-radius: 8px; font-weight: bold; color: #4338ca; display: inline-block; margin: 10px 0; }
- button { background: #4f46e5; color: white; border: none; padding: 12px 20px; border-radius: 10px; width: 100%; font-size: 16px; margin-top: 15px; cursor: pointer; }
-.hindi { color: #666; }
- li { margin: 6px 0; }
+  :root {
+    --primary: #4f46e5;
+    --primary-hover: #4338ca;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --text: #0f172a;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+  body { background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
+  .container { max-width: 600px; width: 100%; background: var(--card); border-radius: 24px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+  
+  /* Header */
+  .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px; }
+  .badge { background: #e0e7ff; color: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
+  .btn-settings { background: none; border: none; font-size: 20px; cursor: pointer; }
+
+  /* Sections */
+  .section { display: none; }
+  .section.active { display: block; }
+  
+  /* Word Card */
+  .word-item { background: #f1f5f9; padding: 14px; border-radius: 12px; margin-bottom: 12px; }
+  .word-header { display: flex; justify-content: space-between; align-items: center; }
+  .word-title { font-size: 18px; font-weight: 700; color: #1e293b; }
+  .word-hindi { color: #475569; font-size: 14px; margin: 4px 0; }
+  .word-example { font-style: italic; color: var(--muted); font-size: 13px; }
+  .sound-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
+
+  /* Buttons & Inputs */
+  button.action-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; transition: 0.2s; }
+  button.action-btn:hover { background: var(--primary-hover); }
+  button.action-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  
+  input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 6px; margin-bottom: 15px; outline: none; }
+  input[type="text"]:focus, input[type="password"]:focus { border-color: var(--primary); }
+
+  /* Quiz Area */
+  .quiz-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 14px; margin-bottom: 16px; }
+  .loader { text-align: center; padding: 30px; font-weight: bold; color: var(--primary); }
+  .feedback-box { background: #e0f2fe; border-left: 4px solid #0284c7; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 14px; }
 </style>
 </head>
 <body>
-<div class="card">
-  <h2 id="sentence">Can you send me the file?</h2>
-  <p class="hindi" id="hindi">क्या आप मुझे फाइल भेज सकते हैं?</p>
-  <div class="pattern" id="pattern">Pattern: Can you + [verb] + [object]?</div>
-  <p><b>Swap karke bolo:</b></p>
-  <ul id="swaps"></ul>
-  <button onclick="nextSentence()">Next Sentence -></button>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <h3 style="font-size: 20px;">Daily English Brain</h3>
+      <span style="font-size: 12px; color: var(--muted);" id="dateLabel"></span>
+    </div>
+    <div>
+      <span class="badge" id="levelBadge">Level: ...</span>
+      <button class="btn-settings" onclick="openSettings()" title="Settings">⚙️</button>
+    </div>
+  </div>
+
+  <!-- Settings View -->
+  <div id="settingsView" class="section">
+    <h4>Setup Keys (Stored Locally)</h4>
+    <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Yeh keys browser mein safe rahengi.</p>
+    <label style="font-size: 13px;">Gemini API Key:</label>
+    <input type="password" id="geminiKeyInput" placeholder="AIzaSy...">
+    
+    <label style="font-size: 13px;">Google Sheet Web App URL:</label>
+    <input type="text" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
+    
+    <button class="action-btn" onclick="saveSettings()">Save & Continue</button>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loader" class="loader" style="display: none;">
+    AI Brain soch raha hai... kripya wait karein! 🤖
+  </div>
+
+  <!-- Already Done View -->
+  <div id="doneView" class="section" style="text-align: center; padding: 40px 20px;">
+    <h2 style="font-size: 50px; margin-bottom: 10px;">🎉</h2>
+    <h3>Aaj ka quota poora!</h3>
+    <p style="color: var(--muted); margin-top: 10px;">AI brain ab aaram kar raha hai. Kal wapas aana naye words aur naye level ke saath!</p>
+  </div>
+
+  <!-- Learn Mode -->
+  <div id="learnView" class="section">
+    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In 10 words ko dhyan se padho aur pronunciation suno:</p>
+    <div id="wordsContainer"></div>
+    <button class="action-btn" onclick="startTest()">Start Today's Test 📝</button>
+  </div>
+
+  <!-- Test Mode -->
+  <div id="testView" class="section">
+    <h4>Daily Knowledge Test</h4>
+    <p style="margin-bottom: 16px; color: var(--muted); font-size: 13px;">Niche diye gaye shabdon ka use karke English sentences banao:</p>
+    <div id="testContainer"></div>
+    <button class="action-btn" id="submitTestBtn" onclick="evaluateTest()">Submit Test to AI Brain 🚀</button>
+  </div>
+
+  <!-- Result View -->
+  <div id="resultView" class="section">
+    <h3>Test Assessment</h3>
+    <div class="quiz-card" style="margin-top: 15px; text-align: center;">
+      <h2 id="scoreText" style="color: var(--primary);"></h2>
+      <p id="decisionText" style="margin-top: 8px; font-weight: bold;"></p>
+    </div>
+    <div class="feedback-box" id="feedbackText"></div>
+    <button class="action-btn" onclick="finishDay()">Done for Today</button>
+  </div>
 </div>
 
 <script>
-const data = [
-  {
-    en: "Can you send me the file?",
-    hi: "क्या आप मुझे फाइल भेज सकते हैं?",
-    pattern: "Can you + [verb] + [object]?",
-    swaps: ["Can you call me later?", "Can you help me today?", "Can you explain this again?"]
-  },
-  {
-    en: "I'm going to cook dinner tonight.",
-    hi: "मैं आज रात खाना बनाऊंगा/बनाऊंगी।",
-    pattern: "I'm going to + [verb] +...",
-    swaps: ["I'm going to start gym tomorrow", "I'm going to visit my parents", "I'm going to learn English"]
-  },
-  {
-    en: "I don't mind waiting.",
-    hi: "मुझे इंतज़ार करने में कोई दिक्कत नहीं है।",
-    pattern: "I don't mind + [verb-ing]",
-    swaps: ["I don't mind paying extra", "I don't mind working late", "I don't mind taking the bus"]
-  },
-  {
-    en: "Let's grab some chai.",
-    hi: "चलो चाय पीते हैं।",
-    pattern: "Let's + [verb] +...",
-    swaps: ["Let's go for a walk", "Let's watch a movie", "Let's discuss it tomorrow"]
-  },
-  {
-    en: "It depends on the budget.",
-    hi: "यह बजट पर निर्भर करता है।",
-    pattern: "It depends on + [noun]",
-    swaps: ["It depends on the weather", "It depends on your time", "It depends on traffic"]
-  }
-];
+let currentLevel = 1;
+let todayWords = [];
 
-let index = 0;
-function nextSentence(){
-  index = (index + 1) % data.length;
-  const item = data[index];
-  document.getElementById('sentence').innerText = item.en;
-  document.getElementById('hindi').innerText = item.hi;
-  document.getElementById('pattern').innerText = "Pattern: " + item.pattern;
-  document.getElementById('swaps').innerHTML = item.swaps.map(s => `<li>${s}</li>`).join('');
+window.onload = async () => {
+  const today = new Date().toDateString();
+  document.getElementById('dateLabel').innerText = today;
+
+  if (localStorage.getItem('LAST_TEST_DATE') === today) {
+    showSection('doneView');
+    return; 
+  }
+
+  const geminiKey = localStorage.getItem('GEMINI_KEY');
+  const sheetUrl = localStorage.getItem('SHEET_URL');
+
+  if (!geminiKey || !sheetUrl) {
+    showSection('settingsView');
+  } else {
+    await fetchLevelAndWords();
+  }
+};
+
+function showSection(id) {
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
-nextSentence();
+
+function openSettings() {
+  document.getElementById('geminiKeyInput').value = localStorage.getItem('GEMINI_KEY') || '';
+  document.getElementById('sheetUrlInput').value = localStorage.getItem('SHEET_URL') || '';
+  showSection('settingsView');
+}
+
+function saveSettings() {
+  const k = document.getElementById('geminiKeyInput').value.trim();
+  const u = document.getElementById('sheetUrlInput').value.trim();
+  if(!k || !u) return alert("Dono details dalna zaroori hai!");
+  localStorage.setItem('GEMINI_KEY', k);
+  localStorage.setItem('SHEET_URL', u);
+  fetchLevelAndWords();
+}
+
+async function fetchLevelAndWords() {
+  const loader = document.getElementById('loader');
+  loader.style.display = 'block';
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+
+  try {
+    const sheetUrl = localStorage.getItem('SHEET_URL');
+    const res = await fetch(sheetUrl);
+    const data = await res.json();
+    currentLevel = data.level || 1;
+    document.getElementById('levelBadge').innerText = `Level: ${currentLevel}`;
+
+    await fetchWordsFromGemini(currentLevel);
+  } catch(e) {
+    alert("Error fetching level details: " + e.message);
+    showSection('settingsView');
+  } finally {
+    loader.style.display = 'none';
+  }
+}
+
+async function fetchWordsFromGemini(level) {
+  const apiKey = localStorage.getItem('GEMINI_KEY');
+  const prompt = `Give me 10 English vocabulary words for an English learner at Level ${level} (Scale 1 to 50, where 1 is absolute beginner and 50 is native executive).
+Return ONLY a valid JSON array of objects with keys: "word", "hindi", "meaning", "example". No markdown formatting or extra text.`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+  
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }]
+    })
+  });
+
+  const resJson = await response.json();
+  
+  if (resJson.error) {
+      throw new Error(`Gemini API Error: ${resJson.error.message}`);
+  }
+  
+  if (!resJson.candidates || !resJson.candidates[0]) {
+      throw new Error("Invalid response format received from AI.");
+  }
+
+  let text = resJson.candidates[0].content.parts[0].text;
+  text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+  todayWords = JSON.parse(text);
+
+  renderWords();
+}
+
+function renderWords() {
+  const container = document.getElementById('wordsContainer');
+  container.innerHTML = todayWords.map((item, i) => `
+    <div class="word-item">
+      <div class="word-header">
+        <span class="word-title">${item.word}</span>
+        <button class="sound-btn" onclick="speak('${item.word}')">🔊</button>
+      </div>
+      <div class="word-hindi"><b>अर्थ:</b> ${item.hindi} (${item.meaning})</div>
+      <div class="word-example">Example: ${item.example}</div>
+    </div>
+  `).join('');
+  showSection('learnView');
+}
+
+function speak(text) {
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US';
+  window.speechSynthesis.speak(u);
+}
+
+function startTest() {
+  const testBox = document.getElementById('testContainer');
+  testBox.innerHTML = todayWords.map((item, i) => `
+    <div class="quiz-card">
+      <p><b>Word ${i+1}:</b> ${item.word} (${item.hindi})</p>
+      <input type="text" id="ans_${i}" placeholder="Make a sentence using '${item.word}'...">
+    </div>
+  `).join('');
+  showSection('testView');
+}
+
+async function evaluateTest() {
+  const btn = document.getElementById('submitTestBtn');
+  btn.disabled = true;
+  btn.innerText = "Evaluating...";
+
+  let submission = [];
+  todayWords.forEach((item, i) => {
+    const userVal = document.getElementById(`ans_${i}`).value;
+    submission.push({ word: item.word, sentence: userVal || "(Left blank)" });
+  });
+
+  const apiKey = localStorage.getItem('GEMINI_KEY');
+  const prompt = `Act as an expert English examiner. Here is a test taken by a learner at Level ${currentLevel}.
+User submissions:
+${JSON.stringify(submission)}
+
+Evaluate each sentence for grammar and correct context usage of the word.
+Return ONLY a valid JSON object with keys:
+- "score": An integer score out of 10.
+- "feedback": 2-3 lines of feedback in simple Hinglish explaining mistakes or praising effort.
+- "upgradeLevel": Boolean true if score >= 8, else false.
+No markdown syntax.`;
+
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+  
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    
+    const resJson = await response.json();
+    
+    if (resJson.error) {
+      throw new Error(`Gemini API Error: ${resJson.error.message}`);
+    }
+
+    let text = resJson.candidates[0].content.parts[0].text;
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    const result = JSON.parse(text);
+
+    let newLevel = currentLevel;
+    if (result.upgradeLevel) {
+      newLevel = currentLevel + 1;
+    } else if (result.score <= 3 && currentLevel > 1) {
+      newLevel = currentLevel - 1; 
+    }
+
+    await saveToSheet(result.score, newLevel);
+
+    document.getElementById('scoreText').innerText = `Score: ${result.score} / 10`;
+    document.getElementById('decisionText').innerText = result.upgradeLevel 
+      ? `🎉 Congratulations! Kal se aap Level ${newLevel} par honge!` 
+      : `👍 Achha try tha! Kal isi level par thoda aur practice karenge.`;
+    document.getElementById('feedbackText').innerText = result.feedback;
+
+    showSection('resultView');
+  } catch(e) {
+    alert("Evaluation failed: " + e.message);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "Submit Test to AI Brain 🚀";
+  }
+}
+
+async function saveToSheet(score, newLevel) {
+  const sheetUrl = localStorage.getItem('SHEET_URL');
+  try {
+    await fetch(sheetUrl, {
+      method: 'POST',
+      mode: 'no-cors', 
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ score: score, newLevel: newLevel })
+    });
+  } catch(e) {
+    console.error("Sheet saving error: ", e);
+  }
+}
+
+function finishDay() {
+  localStorage.setItem('LAST_TEST_DATE', new Date().toDateString());
+  alert("Aaj ka session complete! Ab aaram karo.");
+  location.reload();
+}
 </script>
 </body>
 </html>
