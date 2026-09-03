@@ -3,91 +3,71 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Calculator by Meta AI</title>
+<title>Daily English Tutor</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box;font-family:system-ui}
-  body{background:#0f0f0f;display:flex;justify-content:center;align-items:center;min-height:100vh}
-  .calc{background:#1a1a1a;width:320px;border-radius:24px;padding:20px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
-  .display{background:#000;color:#fff;text-align:right;padding:20px;border-radius:16px;margin-bottom:16px;min-height:80px;word-wrap:break-word;overflow:hidden}
-  #prev{color:#888;font-size:14px;min-height:18px}
-  #curr{font-size:36px;font-weight:600;margin-top:4px}
-  .btns{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
-  button{border:none;height:64px;border-radius:16px;font-size:20px;font-weight:600;cursor:pointer;transition:.15s}
-  button:active{transform:scale(.92)}
-  .num{background:#2a2a2a;color:#fff}
-  .num:hover{background:#333}
-  .op{background:#ff9f0a;color:#fff}
-  .op:hover{background:#ffb143}
-  .func{background:#a5a5a5;color:#000}
-  .zero{grid-column:span 2}
+ body { font-family: sans-serif; background: #f6f5ff; padding: 20px; }
+.card { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); max-width: 500px; margin: auto; }
+ h2 { margin-top: 0; }
+.pattern { background: #eef2ff; padding: 8px 12px; border-radius: 8px; font-weight: bold; color: #4338ca; display: inline-block; margin: 10px 0; }
+ button { background: #4f46e5; color: white; border: none; padding: 12px 20px; border-radius: 10px; width: 100%; font-size: 16px; margin-top: 15px; cursor: pointer; }
+.hindi { color: #666; }
+ li { margin: 6px 0; }
 </style>
 </head>
 <body>
-<div class="calc">
-  <div class="display">
-    <div id="prev"></div>
-    <div id="curr">0</div>
-  </div>
-  <div class="btns">
-    <button class="func" onclick="clearAll()">AC</button>
-    <button class="func" onclick="del()">⌫</button>
-    <button class="func" onclick="append('%')">%</button>
-    <button class="op" onclick="append('/')">÷</button>
-    <button class="num" onclick="append('7')">7</button>
-    <button class="num" onclick="append('8')">8</button>
-    <button class="num" onclick="append('9')">9</button>
-    <button class="op" onclick="append('*')">×</button>
-    <button class="num" onclick="append('4')">4</button>
-    <button class="num" onclick="append('5')">5</button>
-    <button class="num" onclick="append('6')">6</button>
-    <button class="op" onclick="append('-')">−</button>
-    <button class="num" onclick="append('1')">1</button>
-    <button class="num" onclick="append('2')">2</button>
-    <button class="num" onclick="append('3')">3</button>
-    <button class="op" onclick="append('+')">+</button>
-    <button class="num zero" onclick="append('0')">0</button>
-    <button class="num" onclick="append('.')">.</button>
-    <button class="op" onclick="calculate()">=</button>
-  </div>
+<div class="card">
+  <h2 id="sentence">Can you send me the file?</h2>
+  <p class="hindi" id="hindi">क्या आप मुझे फाइल भेज सकते हैं?</p>
+  <div class="pattern" id="pattern">Pattern: Can you + [verb] + [object]?</div>
+  <p><b>Swap karke bolo:</b></p>
+  <ul id="swaps"></ul>
+  <button onclick="nextSentence()">Next Sentence -></button>
 </div>
+
 <script>
-  let currEl = document.getElementById('curr');
-  let prevEl = document.getElementById('prev');
-  let expression = '';
-
-  function update() {
-    currEl.textContent = expression || '0';
-    prevEl.textContent = expression;
+const data = [
+  {
+    en: "Can you send me the file?",
+    hi: "क्या आप मुझे फाइल भेज सकते हैं?",
+    pattern: "Can you + [verb] + [object]?",
+    swaps: ["Can you call me later?", "Can you help me today?", "Can you explain this again?"]
+  },
+  {
+    en: "I'm going to cook dinner tonight.",
+    hi: "मैं आज रात खाना बनाऊंगा/बनाऊंगी।",
+    pattern: "I'm going to + [verb] +...",
+    swaps: ["I'm going to start gym tomorrow", "I'm going to visit my parents", "I'm going to learn English"]
+  },
+  {
+    en: "I don't mind waiting.",
+    hi: "मुझे इंतज़ार करने में कोई दिक्कत नहीं है।",
+    pattern: "I don't mind + [verb-ing]",
+    swaps: ["I don't mind paying extra", "I don't mind working late", "I don't mind taking the bus"]
+  },
+  {
+    en: "Let's grab some chai.",
+    hi: "चलो चाय पीते हैं।",
+    pattern: "Let's + [verb] +...",
+    swaps: ["Let's go for a walk", "Let's watch a movie", "Let's discuss it tomorrow"]
+  },
+  {
+    en: "It depends on the budget.",
+    hi: "यह बजट पर निर्भर करता है।",
+    pattern: "It depends on + [noun]",
+    swaps: ["It depends on the weather", "It depends on your time", "It depends on traffic"]
   }
+];
 
-  function append(val) {
-    if (expression === 'Error') expression = '';
-    expression += val;
-    update();
-  }
-
-  function clearAll() {
-    expression = '';
-    update();
-  }
-
-  function del() {
-    expression = expression.slice(0, -1);
-    update();
-  }
-
-  function calculate() {
-    try {
-      // safe eval
-      let result = Function('"use strict";return (' + expression + ')')();
-      if (!isFinite(result)) throw new Error();
-      expression = String(Math.round(result * 100000000) / 100000000);
-      update();
-    } catch {
-      expression = 'Error';
-      update();
-    }
-  }
+let index = 0;
+function nextSentence(){
+  index = (index + 1) % data.length;
+  const item = data[index];
+  document.getElementById('sentence').innerText = item.en;
+  document.getElementById('hindi').innerText = item.hi;
+  document.getElementById('pattern').innerText = "Pattern: " + item.pattern;
+  document.getElementById('swaps').innerHTML = item.swaps.map(s => `<li>${s}</li>`).join('');
+}
+nextSentence();
 </script>
 </body>
 </html>
