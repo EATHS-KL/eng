@@ -73,7 +73,10 @@
     <label style="font-size: 13px;">Google Sheet Web App URL:</label>
     <input type="text" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
     
-    <button class="action-btn" onclick="saveSettings()">Save & Continue</button>
+    <div style="display: flex; gap: 10px;">
+      <button class="action-btn" onclick="saveSettings()">Save & Continue</button>
+      <button class="action-btn" id="cancelSettingsBtn" style="background: #64748b;" onclick="cancelSettings()">Cancel</button>
+    </div>
   </div>
 
   <!-- Loading State -->
@@ -118,6 +121,7 @@
 <script>
 let currentLevel = 1;
 let todayWords = [];
+let previousSection = 'learnView'; // Yad rakhne ke liye ki pehle kahan the
 
 window.onload = async () => {
   const today = new Date().toDateString();
@@ -139,6 +143,12 @@ window.onload = async () => {
 };
 
 function showSection(id) {
+  // Settings kholne se pehle current section ko save kar lo taaki cancel karne par wapas aa sakein
+  const current = document.querySelector('.section.active');
+  if (current && current.id !== 'settingsView' && current.id !== 'loader') {
+    previousSection = current.id;
+  }
+
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
@@ -146,16 +156,44 @@ function showSection(id) {
 function openSettings() {
   document.getElementById('geminiKeyInput').value = localStorage.getItem('GEMINI_KEY') || '';
   document.getElementById('sheetUrlInput').value = localStorage.getItem('SHEET_URL') || '';
+  
+  // Agar keys pehle se set hain toh Cancel button dikhao, warna chupao (first time aane par)
+  if (localStorage.getItem('GEMINI_KEY') && localStorage.getItem('SHEET_URL')) {
+    document.getElementById('cancelSettingsBtn').style.display = 'block';
+  } else {
+    document.getElementById('cancelSettingsBtn').style.display = 'none';
+  }
+
   showSection('settingsView');
+}
+
+function cancelSettings() {
+  // Seedha wapas us section par jao jahan the
+  showSection(previousSection);
 }
 
 function saveSettings() {
   const k = document.getElementById('geminiKeyInput').value.trim();
   const u = document.getElementById('sheetUrlInput').value.trim();
   if(!k || !u) return alert("Dono details dalna zaroori hai!");
+  
+  const oldKey = localStorage.getItem('GEMINI_KEY');
+  const oldUrl = localStorage.getItem('SHEET_URL');
+
   localStorage.setItem('GEMINI_KEY', k);
   localStorage.setItem('SHEET_URL', u);
-  fetchLevelAndWords();
+  
+  // Sirf tab AI ko call karo jab nayi key/url daali ho YA test start nahi hua ho
+  if (k !== oldKey || u !== oldUrl || todayWords.length === 0) {
+    if (localStorage.getItem('LAST_TEST_DATE') === new Date().toDateString()) {
+      showSection('doneView');
+    } else {
+      fetchLevelAndWords();
+    }
+  } else {
+    // Agar same keys save ki hain bina change kiye, toh bina API call kiye pichle page par jao
+    showSection(previousSection);
+  }
 }
 
 async function fetchLevelAndWords() {
