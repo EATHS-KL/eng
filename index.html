@@ -5,53 +5,34 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AI Smart English Tutor</title>
 <style>
-  :root {
-    --primary: #4f46e5;
-    --primary-hover: #4338ca;
-    --bg: #f8fafc;
-    --card: #ffffff;
-    --text: #0f172a;
-    --muted: #64748b;
-  }
+  :root { --primary: #4f46e5; --primary-hover: #4338ca; --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
   body { background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
   .container { max-width: 600px; width: 100%; background: var(--card); border-radius: 24px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-  
-  /* Header */
   .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px; }
   .badge { background: #e0e7ff; color: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
   .btn-settings { background: none; border: none; font-size: 20px; cursor: pointer; }
-
-  /* Sections */
-  .section { display: none; }
-  .section.active { display: block; }
-  
-  /* Word Card */
+  .section { display: none; } .section.active { display: block; }
+  .grammar-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+  .grammar-title { font-size: 16px; font-weight: bold; color: #b45309; margin-bottom: 8px; }
+  .grammar-desc { font-size: 14px; color: #451a03; line-height: 1.5; }
   .word-item { background: #f1f5f9; padding: 14px; border-radius: 12px; margin-bottom: 12px; }
   .word-header { display: flex; justify-content: space-between; align-items: center; }
   .word-title { font-size: 18px; font-weight: 700; color: #1e293b; }
   .word-hindi { color: #475569; font-size: 14px; margin: 4px 0; }
   .word-example { font-style: italic; color: var(--muted); font-size: 13px; }
   .sound-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
-
-  /* Buttons & Inputs */
   button.action-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; transition: 0.2s; }
   button.action-btn:hover { background: var(--primary-hover); }
   button.action-btn:disabled { background: #94a3b8; cursor: not-allowed; }
-  
   input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 6px; margin-bottom: 15px; outline: none; }
-  input[type="text"]:focus, input[type="password"]:focus { border-color: var(--primary); }
-
-  /* Quiz Area */
   .quiz-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 14px; margin-bottom: 16px; }
   .loader { text-align: center; padding: 30px; font-weight: bold; color: var(--primary); }
-  .feedback-box { background: #e0f2fe; border-left: 4px solid #0284c7; padding: 12px; border-radius: 6px; margin-top: 15px; font-size: 14px; }
+  .feedback-box { background: #e0f2fe; border-left: 4px solid #0284c7; padding: 15px; border-radius: 6px; margin-top: 15px; font-size: 14px; line-height: 1.6; }
 </style>
 </head>
 <body>
-
 <div class="container">
-  <!-- Header -->
   <div class="header">
     <div>
       <h3 style="font-size: 20px;">Daily English Brain</h3>
@@ -63,50 +44,42 @@
     </div>
   </div>
 
-  <!-- Settings View -->
   <div id="settingsView" class="section">
-    <h4>Setup Keys (Stored Locally)</h4>
-    <p style="font-size: 12px; color: var(--muted); margin-bottom: 10px;">Yeh keys browser mein safe rahengi.</p>
+    <h4>Setup Keys</h4>
     <label style="font-size: 13px;">Gemini API Key:</label>
-    <input type="password" id="geminiKeyInput" placeholder="AIzaSy...">
-    
+    <input type="password" id="geminiKeyInput">
     <label style="font-size: 13px;">Google Sheet Web App URL:</label>
-    <input type="text" id="sheetUrlInput" placeholder="https://script.google.com/macros/s/.../exec">
-    
+    <input type="text" id="sheetUrlInput">
     <div style="display: flex; gap: 10px;">
       <button class="action-btn" onclick="saveSettings()">Save & Continue</button>
       <button class="action-btn" id="cancelSettingsBtn" style="background: #64748b;" onclick="cancelSettings()">Cancel</button>
     </div>
   </div>
 
-  <!-- Loading State -->
   <div id="loader" class="loader" style="display: none;">
-    AI Brain soch raha hai... kripya wait karein! 🤖
+    AI aapki sheet se details padh raha hai... 🤖
   </div>
 
-  <!-- Already Done View -->
   <div id="doneView" class="section" style="text-align: center; padding: 40px 20px;">
-    <h2 style="font-size: 50px; margin-bottom: 10px;">🎉</h2>
+    <h2 style="font-size: 50px;">🎉</h2>
     <h3>Aaj ka quota poora!</h3>
-    <p style="color: var(--muted); margin-top: 10px;">AI brain ab aaram kar raha hai. Kal wapas aana naye words aur naye level ke saath!</p>
+    <p style="color: var(--muted);">Kal naye rules aur naye topic ke sath milenge.</p>
   </div>
 
-  <!-- Learn Mode -->
   <div id="learnView" class="section">
-    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In 10 words ko dhyan se padho aur pronunciation suno:</p>
+    <div class="grammar-box" id="grammarRuleBox"></div>
+    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In words ko rule ke hisaab se samajhne ki koshish karo:</p>
     <div id="wordsContainer"></div>
     <button class="action-btn" onclick="startTest()">Start Today's Test 📝</button>
   </div>
 
-  <!-- Test Mode -->
   <div id="testView" class="section">
     <h4>Daily Knowledge Test</h4>
-    <p style="margin-bottom: 16px; color: var(--muted); font-size: 13px;">Niche diye gaye shabdon ka use karke English sentences banao:</p>
+    <p style="margin-bottom: 16px; color: var(--muted); font-size: 13px;">Aaj sikhe gaye grammar rule ka use karke in words se khud ke sentence banao:</p>
     <div id="testContainer"></div>
-    <button class="action-btn" id="submitTestBtn" onclick="evaluateTest()">Submit Test to AI Brain 🚀</button>
+    <button class="action-btn" id="submitTestBtn" onclick="evaluateTest()">Submit Test to AI 🚀</button>
   </div>
 
-  <!-- Result View -->
   <div id="resultView" class="section">
     <h3>Test Assessment</h3>
     <div class="quiz-card" style="margin-top: 15px; text-align: center;">
@@ -120,8 +93,8 @@
 
 <script>
 let currentLevel = 1;
-let todayWords = [];
-let previousSection = 'learnView'; // Yad rakhne ke liye ki pehle kahan the
+let todayLesson = null;
+let previousSection = 'learnView';
 
 window.onload = async () => {
   const today = new Date().toDateString();
@@ -143,12 +116,10 @@ window.onload = async () => {
 };
 
 function showSection(id) {
-  // Settings kholne se pehle current section ko save kar lo taaki cancel karne par wapas aa sakein
   const current = document.querySelector('.section.active');
   if (current && current.id !== 'settingsView' && current.id !== 'loader') {
     previousSection = current.id;
   }
-
   document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
   document.getElementById(id).classList.add('active');
 }
@@ -156,102 +127,90 @@ function showSection(id) {
 function openSettings() {
   document.getElementById('geminiKeyInput').value = localStorage.getItem('GEMINI_KEY') || '';
   document.getElementById('sheetUrlInput').value = localStorage.getItem('SHEET_URL') || '';
-  
-  // Agar keys pehle se set hain toh Cancel button dikhao, warna chupao (first time aane par)
-  if (localStorage.getItem('GEMINI_KEY') && localStorage.getItem('SHEET_URL')) {
-    document.getElementById('cancelSettingsBtn').style.display = 'block';
-  } else {
-    document.getElementById('cancelSettingsBtn').style.display = 'none';
-  }
-
+  document.getElementById('cancelSettingsBtn').style.display = (localStorage.getItem('GEMINI_KEY')) ? 'block' : 'none';
   showSection('settingsView');
 }
 
-function cancelSettings() {
-  // Seedha wapas us section par jao jahan the
-  showSection(previousSection);
-}
+function cancelSettings() { showSection(previousSection); }
 
 function saveSettings() {
   const k = document.getElementById('geminiKeyInput').value.trim();
   const u = document.getElementById('sheetUrlInput').value.trim();
-  if(!k || !u) return alert("Dono details dalna zaroori hai!");
+  if(!k || !u) return alert("Dono details daalna zaroori hai!");
   
   const oldKey = localStorage.getItem('GEMINI_KEY');
-  const oldUrl = localStorage.getItem('SHEET_URL');
-
   localStorage.setItem('GEMINI_KEY', k);
   localStorage.setItem('SHEET_URL', u);
   
-  // Sirf tab AI ko call karo jab nayi key/url daali ho YA test start nahi hua ho
-  if (k !== oldKey || u !== oldUrl || todayWords.length === 0) {
-    if (localStorage.getItem('LAST_TEST_DATE') === new Date().toDateString()) {
-      showSection('doneView');
-    } else {
-      fetchLevelAndWords();
-    }
-  } else {
-    // Agar same keys save ki hain bina change kiye, toh bina API call kiye pichle page par jao
-    showSection(previousSection);
-  }
+  if (k !== oldKey || !todayLesson) fetchLevelAndWords();
+  else showSection(previousSection);
 }
 
 async function fetchLevelAndWords() {
-  const loader = document.getElementById('loader');
-  loader.style.display = 'block';
-  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
-
+  showSection('loader');
   try {
     const sheetUrl = localStorage.getItem('SHEET_URL');
     const res = await fetch(sheetUrl);
     const data = await res.json();
     currentLevel = data.level || 1;
+    let sheetWeakness = data.weakness || ""; 
+    
     document.getElementById('levelBadge').innerText = `Level: ${currentLevel}`;
-
-    await fetchWordsFromGemini(currentLevel);
+    await fetchWordsFromGemini(currentLevel, sheetWeakness);
   } catch(e) {
-    alert("Error fetching level details: " + e.message);
+    alert("Error fetching from Sheet: " + e.message);
     showSection('settingsView');
-  } finally {
-    loader.style.display = 'none';
   }
 }
 
-async function fetchWordsFromGemini(level) {
+async function fetchWordsFromGemini(level, lastWeakness) {
   const apiKey = localStorage.getItem('GEMINI_KEY');
-  const prompt = `Give me 10 English vocabulary words for an English learner at Level ${level} (Scale 1 to 50, where 1 is absolute beginner and 50 is native executive).
-Return ONLY a valid JSON array of objects with keys: "word", "hindi", "meaning", "example". No markdown formatting or extra text.`;
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+  const topics = ["Daily Routine", "Travel & Journey", "Office & Work", "Food & Cooking", "Technology", "Emotions", "Shopping", "Health & Fitness", "Nature"];
+  const randomTopic = topics[Math.floor(Math.random() * topics.length)];
   
-  const response = await fetch(url, {
+  let grammarInstruction = `Teach them ONE simple grammar rule today (e.g., how to use 'is/am/are', 'has/have', Simple Past tense).`;
+  
+  if (lastWeakness && lastWeakness.trim() !== "") {
+    grammarInstruction = `CRITICAL: Yesterday, the user struggled with "${lastWeakness}". You MUST make today's grammar rule focus strictly on teaching and fixing this specific weakness. Explain the logic clearly.`;
+  }
+
+  const prompt = `Act as an expert English teacher for an Indian student at Level ${level} (1-50 scale).
+  Today's topic is: "${randomTopic}". Do NOT use basic words like 'water', 'friend', or 'family'.
+  
+  ${grammarInstruction}
+  Explain the rule in simple Hinglish. Then provide 8 unique vocabulary words related to the topic that they can practice using this rule.
+  
+  Return ONLY a valid JSON object with this exact structure:
+  {
+    "grammarTitle": "Rule name",
+    "grammarExplanation": "Hinglish explanation of the rule with format formula (e.g., Subject + Verb + Object) and 1 example.",
+    "words": [
+      {"word": "word1", "hindi": "hindi meaning", "meaning": "english meaning", "example": "example sentence using the word AND today's grammar rule"}
+    ]
+  }`;
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: prompt }] }]
-    })
+    body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
   });
 
   const resJson = await response.json();
-  
-  if (resJson.error) {
-      throw new Error(`Gemini API Error: ${resJson.error.message}`);
-  }
-  
-  if (!resJson.candidates || !resJson.candidates[0]) {
-      throw new Error("Invalid response format received from AI.");
-  }
-
   let text = resJson.candidates[0].content.parts[0].text;
   text = text.replace(/```json/g, '').replace(/```/g, '').trim();
-  todayWords = JSON.parse(text);
-
-  renderWords();
+  todayLesson = JSON.parse(text);
+  renderLesson();
 }
 
-function renderWords() {
+function renderLesson() {
+  const grammarBox = document.getElementById('grammarRuleBox');
+  grammarBox.innerHTML = `
+    <div class="grammar-title">📘 Aaj ka Rule: ${todayLesson.grammarTitle}</div>
+    <div class="grammar-desc">${todayLesson.grammarExplanation.replace(/\n/g, '<br>')}</div>
+  `;
+
   const container = document.getElementById('wordsContainer');
-  container.innerHTML = todayWords.map((item, i) => `
+  container.innerHTML = todayLesson.words.map((item, i) => `
     <div class="word-item">
       <div class="word-header">
         <span class="word-title">${item.word}</span>
@@ -272,10 +231,10 @@ function speak(text) {
 
 function startTest() {
   const testBox = document.getElementById('testContainer');
-  testBox.innerHTML = todayWords.map((item, i) => `
+  testBox.innerHTML = todayLesson.words.map((item, i) => `
     <div class="quiz-card">
-      <p><b>Word ${i+1}:</b> ${item.word} (${item.hindi})</p>
-      <input type="text" id="ans_${i}" placeholder="Make a sentence using '${item.word}'...">
+      <p><b>${i+1}:</b> ${item.word} (${item.hindi})</p>
+      <input type="text" id="ans_${i}" placeholder="Upar sikhaye rule se sentence banao...">
     </div>
   `).join('');
   showSection('testView');
@@ -287,83 +246,73 @@ async function evaluateTest() {
   btn.innerText = "Evaluating...";
 
   let submission = [];
-  todayWords.forEach((item, i) => {
+  todayLesson.words.forEach((item, i) => {
     const userVal = document.getElementById(`ans_${i}`).value;
     submission.push({ word: item.word, sentence: userVal || "(Left blank)" });
   });
 
   const apiKey = localStorage.getItem('GEMINI_KEY');
-  const prompt = `Act as an expert English examiner. Here is a test taken by a learner at Level ${currentLevel}.
-User submissions:
-${JSON.stringify(submission)}
-
-Evaluate each sentence for grammar and correct context usage of the word.
-Return ONLY a valid JSON object with keys:
-- "score": An integer score out of 10.
-- "feedback": 2-3 lines of feedback in simple Hinglish explaining mistakes or praising effort.
-- "upgradeLevel": Boolean true if score >= 8, else false.
-No markdown syntax.`;
-
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`;
+  const prompt = `Act as an expert English examiner for a Level ${currentLevel} learner. 
+  Today they were taught: "${todayLesson.grammarTitle}". 
+  Evaluate their sentences for grammar, correct word usage, and rule application.
+  Submissions: ${JSON.stringify(submission)}
   
+  Return ONLY a valid JSON object:
+  - "score": Integer out of 10.
+  - "feedback": 4-5 lines of detailed feedback in simple Hinglish. Explain WHY it is a mistake.
+  - "coreWeakness": Identify their main grammatical weakness in 2-4 words (e.g., "Prepositions with feelings", "Past Tense Verbs"). If no weakness, return "".
+  - "upgradeLevel": Boolean true if score >= 8.`;
+
   try {
-    const response = await fetch(url, {
+    const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${apiKey}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
     });
     
     const resJson = await response.json();
-    
-    if (resJson.error) {
-      throw new Error(`Gemini API Error: ${resJson.error.message}`);
-    }
-
     let text = resJson.candidates[0].content.parts[0].text;
     text = text.replace(/```json/g, '').replace(/```/g, '').trim();
     const result = JSON.parse(text);
 
     let newLevel = currentLevel;
-    if (result.upgradeLevel) {
-      newLevel = currentLevel + 1;
-    } else if (result.score <= 3 && currentLevel > 1) {
-      newLevel = currentLevel - 1; 
-    }
+    if (result.upgradeLevel) newLevel = currentLevel + 1;
+    else if (result.score <= 3 && currentLevel > 1) newLevel = currentLevel - 1;
 
-    await saveToSheet(result.score, newLevel);
+    let coreWeakness = result.coreWeakness || "";
+    await saveToSheet(result.score, newLevel, coreWeakness);
 
     document.getElementById('scoreText').innerText = `Score: ${result.score} / 10`;
     document.getElementById('decisionText').innerText = result.upgradeLevel 
       ? `🎉 Congratulations! Kal se aap Level ${newLevel} par honge!` 
-      : `👍 Achha try tha! Kal isi level par thoda aur practice karenge.`;
-    document.getElementById('feedbackText').innerText = result.feedback;
+      : `👍 Achha try tha! Kal thoda aur practice karenge.`;
+    document.getElementById('feedbackText').innerHTML = result.feedback.replace(/\n/g, '<br>');
 
     showSection('resultView');
   } catch(e) {
     alert("Evaluation failed: " + e.message);
   } finally {
     btn.disabled = false;
-    btn.innerText = "Submit Test to AI Brain 🚀";
+    btn.innerText = "Submit Test to AI 🚀";
   }
 }
 
-async function saveToSheet(score, newLevel) {
+async function saveToSheet(score, newLevel, weakness) {
   const sheetUrl = localStorage.getItem('SHEET_URL');
   try {
-    await fetch(sheetUrl, {
-      method: 'POST',
+    await fetch(sheetUrl, { 
+      method: 'POST', 
       mode: 'no-cors', 
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ score: score, newLevel: newLevel })
+      body: JSON.stringify({ score: score, newLevel: newLevel, weakness: weakness }) 
     });
   } catch(e) {
-    console.error("Sheet saving error: ", e);
+    console.error("Failed to save to sheet", e);
   }
 }
 
 function finishDay() {
   localStorage.setItem('LAST_TEST_DATE', new Date().toDateString());
-  alert("Aaj ka session complete! Ab aaram karo.");
+  alert("Aaj ka session complete!");
   location.reload();
 }
 </script>
