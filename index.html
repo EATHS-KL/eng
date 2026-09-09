@@ -13,6 +13,8 @@
   .badge { background: #e0e7ff; color: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
   .btn-settings { background: none; border: none; font-size: 20px; cursor: pointer; }
   .section { display: none; } .section.active { display: block; }
+  
+  .notice-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; color: #1e40af; line-height: 1.5; }
   .grammar-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
   .grammar-title { font-size: 16px; font-weight: bold; color: #b45309; margin-bottom: 8px; }
   .grammar-desc { font-size: 14px; color: #451a03; line-height: 1.5; }
@@ -57,7 +59,7 @@
   </div>
 
   <div id="loader" class="loader" style="display: none;">
-    AI aapki sheet se details padh raha hai... 🤖
+    AI sheet se tumhari purani galtiyan padh raha hai... 🤖
   </div>
 
   <div id="doneView" class="section" style="text-align: center; padding: 40px 20px;">
@@ -67,8 +69,9 @@
   </div>
 
   <div id="learnView" class="section">
+    <div id="noticeBannerContainer"></div>
     <div class="grammar-box" id="grammarRuleBox"></div>
-    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In words ko rule ke hisaab se samajhne ki koshish karo:</p>
+    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In words ko naye rule ke hisaab se seekho:</p>
     <div id="wordsContainer"></div>
     <button class="action-btn" onclick="startTest()">Start Today's Test 📝</button>
   </div>
@@ -95,6 +98,8 @@
 let currentLevel = 1;
 let todayLesson = null;
 let previousSection = 'learnView';
+let globalWeakness = "";
+let globalLastRule = "";
 
 window.onload = async () => {
   const today = new Date().toDateString();
@@ -153,39 +158,39 @@ async function fetchLevelAndWords() {
     const res = await fetch(sheetUrl);
     const data = await res.json();
     currentLevel = data.level || 1;
-    let sheetWeakness = data.weakness || ""; 
+    globalWeakness = data.weakness || ""; 
+    globalLastRule = data.lastRule || "";
     
     document.getElementById('levelBadge').innerText = `Level: ${currentLevel}`;
-    await fetchWordsFromGemini(currentLevel, sheetWeakness);
+    await fetchWordsFromGemini(currentLevel, globalWeakness, globalLastRule);
   } catch(e) {
     alert("Error fetching from Sheet: " + e.message);
     showSection('settingsView');
   }
 }
 
-async function fetchWordsFromGemini(level, lastWeakness) {
+async function fetchWordsFromGemini(level, lastWeakness, lastRule) {
   const apiKey = localStorage.getItem('GEMINI_KEY');
   const topics = ["Daily Routine", "Travel & Journey", "Office & Work", "Food & Cooking", "Technology", "Emotions", "Shopping", "Health & Fitness", "Nature"];
   const randomTopic = topics[Math.floor(Math.random() * topics.length)];
   
-  let grammarInstruction = `Teach them ONE simple grammar rule today (e.g., how to use 'is/am/are', 'has/have', Simple Past tense).`;
+  let instruction = `Teach a completely NEW and progressive grammar rule suitable for Level ${level} (do NOT repeat basics like 'is/am/are' or 'has/have' if already taught).`;
   
   if (lastWeakness && lastWeakness.trim() !== "") {
-    grammarInstruction = `CRITICAL: Yesterday, the user struggled with "${lastWeakness}". You MUST make today's grammar rule focus strictly on teaching and fixing this specific weakness. Explain the logic clearly.`;
+    instruction = `CRITICAL FOCUS: In the previous test, the user made a mistake regarding: "${lastWeakness}". (Their previous rule was "${lastRule}"). You MUST introduce a fresh concept or rule today that directly targets and fixes this weakness, ensuring zero repetition of the exact old rule title.`;
   }
 
-  const prompt = `Act as an expert English teacher for an Indian student at Level ${level} (1-50 scale).
-  Today's topic is: "${randomTopic}". Do NOT use basic words like 'water', 'friend', or 'family'.
+  const prompt = `Act as an expert, strict yet encouraging English teacher for an Indian student at Level ${level}.
+  Today's topic: "${randomTopic}". Avoid basic words.
   
-  ${grammarInstruction}
-  Explain the rule in simple Hinglish. Then provide 8 unique vocabulary words related to the topic that they can practice using this rule.
+  ${instruction}
   
   Return ONLY a valid JSON object with this exact structure:
   {
-    "grammarTitle": "Rule name",
-    "grammarExplanation": "Hinglish explanation of the rule with format formula (e.g., Subject + Verb + Object) and 1 example.",
+    "grammarTitle": "New rule name",
+    "grammarExplanation": "Hinglish explanation explaining how this fixes past mistakes, with formula and example.",
     "words": [
-      {"word": "word1", "hindi": "hindi meaning", "meaning": "english meaning", "example": "example sentence using the word AND today's grammar rule"}
+      {"word": "word1", "hindi": "hindi meaning", "meaning": "english meaning", "example": "example sentence using the word and new rule"}
     ]
   }`;
 
@@ -203,9 +208,20 @@ async function fetchWordsFromGemini(level, lastWeakness) {
 }
 
 function renderLesson() {
+  const banner = document.getElementById('noticeBannerContainer');
+  if (globalWeakness) {
+    banner.innerHTML = `
+      <div class="notice-banner">
+        <b>💡 AI Teacher's Note:</b> Kal tumne <b>"${globalWeakness}"</b> mein galti ki thi (Rule: <i>${globalLastRule}</i>). Aaj hum isko dhyan mein rakh kar ek naya aur behtar concept seekh rahe hain taaki yeh galti dobara na ho!
+      </div>
+    `;
+  } else {
+    banner.innerHTML = `<div class="notice-banner"><b>🚀 Chalo Shuru Karein:</b> Aaj ka naya level aur naya concept taiyar hai!</div>`;
+  }
+
   const grammarBox = document.getElementById('grammarRuleBox');
   grammarBox.innerHTML = `
-    <div class="grammar-title">📘 Aaj ka Rule: ${todayLesson.grammarTitle}</div>
+    <div class="grammar-title">📘 Aaj ka Naya Rule: ${todayLesson.grammarTitle}</div>
     <div class="grammar-desc">${todayLesson.grammarExplanation.replace(/\n/g, '<br>')}</div>
   `;
 
@@ -234,7 +250,7 @@ function startTest() {
   testBox.innerHTML = todayLesson.words.map((item, i) => `
     <div class="quiz-card">
       <p><b>${i+1}:</b> ${item.word} (${item.hindi})</p>
-      <input type="text" id="ans_${i}" placeholder="Upar sikhaye rule se sentence banao...">
+      <input type="text" id="ans_${i}" placeholder="Naye rule se sentence banao...">
     </div>
   `).join('');
   showSection('testView');
@@ -254,13 +270,13 @@ async function evaluateTest() {
   const apiKey = localStorage.getItem('GEMINI_KEY');
   const prompt = `Act as an expert English examiner for a Level ${currentLevel} learner. 
   Today they were taught: "${todayLesson.grammarTitle}". 
-  Evaluate their sentences for grammar, correct word usage, and rule application.
+  Evaluate their sentences thoroughly.
   Submissions: ${JSON.stringify(submission)}
   
   Return ONLY a valid JSON object:
   - "score": Integer out of 10.
-  - "feedback": 4-5 lines of detailed feedback in simple Hinglish. Explain WHY it is a mistake.
-  - "coreWeakness": Identify their main grammatical weakness in 2-4 words (e.g., "Prepositions with feelings", "Past Tense Verbs"). If no weakness, return "".
+  - "feedback": Detailed feedback in simple Hinglish explaining mistakes clearly.
+  - "coreWeakness": Identify their main mistake/weakness in 2-4 words (e.g., "Wrong prepositions", "Verb tense error"). If none, "".
   - "upgradeLevel": Boolean true if score >= 8.`;
 
   try {
@@ -280,12 +296,12 @@ async function evaluateTest() {
     else if (result.score <= 3 && currentLevel > 1) newLevel = currentLevel - 1;
 
     let coreWeakness = result.coreWeakness || "";
-    await saveToSheet(result.score, newLevel, coreWeakness);
+    await saveToSheet(result.score, newLevel, coreWeakness, todayLesson.grammarTitle);
 
     document.getElementById('scoreText').innerText = `Score: ${result.score} / 10`;
     document.getElementById('decisionText').innerText = result.upgradeLevel 
-      ? `🎉 Congratulations! Kal se aap Level ${newLevel} par honge!` 
-      : `👍 Achha try tha! Kal thoda aur practice karenge.`;
+      ? `🎉 Amazing! Kal se aap Level ${newLevel} par honge!` 
+      : `👍 Achha khrab nahi tha! Kal isko aur sudharenge.`;
     document.getElementById('feedbackText').innerHTML = result.feedback.replace(/\n/g, '<br>');
 
     showSection('resultView');
@@ -297,13 +313,18 @@ async function evaluateTest() {
   }
 }
 
-async function saveToSheet(score, newLevel, weakness) {
+async function saveToSheet(score, newLevel, weakness, grammarTitle) {
   const sheetUrl = localStorage.getItem('SHEET_URL');
   try {
     await fetch(sheetUrl, { 
       method: 'POST', 
       mode: 'no-cors', 
-      body: JSON.stringify({ score: score, newLevel: newLevel, weakness: weakness }) 
+      body: JSON.stringify({ 
+        score: score, 
+        newLevel: newLevel, 
+        weakness: weakness, 
+        grammarTitle: grammarTitle 
+      }) 
     });
   } catch(e) {
     console.error("Failed to save to sheet", e);
