@@ -8,13 +8,13 @@
   :root { --primary: #4f46e5; --primary-hover: #4338ca; --bg: #f8fafc; --card: #ffffff; --text: #0f172a; --muted: #64748b; }
   * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
   body { background: var(--bg); color: var(--text); padding: 20px; display: flex; justify-content: center; }
-  .container { max-width: 600px; width: 100%; background: var(--card); border-radius: 24px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+  .container { max-width: 600px; width: 100%; background: var(--card); border-radius: 24px; padding: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); position: relative; }
   .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px; margin-bottom: 20px; }
   .badge { background: #e0e7ff; color: var(--primary); padding: 4px 12px; border-radius: 20px; font-weight: bold; font-size: 14px; }
   .btn-settings { background: none; border: none; font-size: 20px; cursor: pointer; }
   .section { display: none; } .section.active { display: block; }
   
-  .notice-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 10px; margin-bottom: 20px; font-size: 13px; color: #1e40af; line-height: 1.5; }
+  .notice-banner { background: #eff6ff; border: 1px solid #bfdbfe; border-left: 4px solid #3b82f6; padding: 12px 16px; border-radius: 10px; margin-bottom: 15px; font-size: 13px; color: #1e40af; line-height: 1.5; }
   .grammar-box { background: #fffbeb; border-left: 4px solid #f59e0b; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
   .grammar-title { font-size: 16px; font-weight: bold; color: #b45309; margin-bottom: 8px; }
   .grammar-desc { font-size: 14px; color: #451a03; line-height: 1.5; }
@@ -24,9 +24,15 @@
   .word-hindi { color: #475569; font-size: 14px; margin: 4px 0; }
   .word-example { font-style: italic; color: var(--muted); font-size: 13px; }
   .sound-btn { background: none; border: none; cursor: pointer; font-size: 16px; }
+  
   button.action-btn { background: var(--primary); color: white; border: none; padding: 14px; width: 100%; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 15px; transition: 0.2s; }
   button.action-btn:hover { background: var(--primary-hover); }
   button.action-btn:disabled { background: #94a3b8; cursor: not-allowed; }
+  
+  .chat-trigger-btn { background: #0ea5e9; color: white; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px; margin-bottom: 15px; width: 100%; justify-content: center; }
+  .chat-box { background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px; margin-bottom: 15px; display: none; }
+  .chat-box textarea { width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 13px; resize: none; height: 60px; outline: none; margin-bottom: 8px; }
+
   input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 6px; margin-bottom: 15px; outline: none; }
   .quiz-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 14px; margin-bottom: 16px; }
   .loader { text-align: center; padding: 30px; font-weight: bold; color: var(--primary); }
@@ -59,26 +65,36 @@
   </div>
 
   <div id="loader" class="loader" style="display: none;">
-    AI sheet se tumhari purani galtiyan padh raha hai... 🤖
+    AI sequence aur purani galtiyan check kar raha hai... 🤖
   </div>
 
   <div id="doneView" class="section" style="text-align: center; padding: 40px 20px;">
     <h2 style="font-size: 50px;">🎉</h2>
     <h3>Aaj ka quota poora!</h3>
-    <p style="color: var(--muted);">Kal naye rules aur naye topic ke sath milenge.</p>
+    <p style="color: var(--muted);">Kal naye sequence ke sath milenge.</p>
   </div>
 
   <div id="learnView" class="section">
     <div id="noticeBannerContainer"></div>
+    
+    <!-- AI Teacher Chat Button & Box -->
+    <button class="chat-trigger-btn" onclick="toggleChatBox()">💬 AI Teacher se baat karein (Level / Words change karwayein)</button>
+    <div class="chatbox-container chat-box" id="aiChatBox">
+      <p style="font-size: 12px; color: var(--muted); margin-bottom: 6px;">AI ko batao kya problem hai (jaise: "Words bahut tough hain, aasan karo"):</p>
+      <textarea id="userChatMsg" placeholder="Yahan apni baat likho..."></textarea>
+      <button class="action-btn" style="margin-top:0; padding:8px; font-size:14px;" onclick="sendMsgToAI()" id="sendChatBtn">AI ko bhejo 🚀</button>
+      <div id="chatReply" style="font-size: 13px; margin-top: 8px; color: #0369a1;"></div>
+    </div>
+
     <div class="grammar-box" id="grammarRuleBox"></div>
-    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In words ko naye rule ke hisaab se seekho:</p>
+    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In words ko is step ke hisaab se seekho:</p>
     <div id="wordsContainer"></div>
     <button class="action-btn" onclick="startTest()">Start Today's Test 📝</button>
   </div>
 
   <div id="testView" class="section">
     <h4>Daily Knowledge Test</h4>
-    <p style="margin-bottom: 16px; color: var(--muted); font-size: 13px;">Aaj sikhe gaye grammar rule ka use karke in words se khud ke sentence banao:</p>
+    <p style="margin-bottom: 16px; color: var(--muted); font-size: 13px;">Is rule ka use karke in words se sentence banao:</p>
     <div id="testContainer"></div>
     <button class="action-btn" id="submitTestBtn" onclick="evaluateTest()">Submit Test to AI 🚀</button>
   </div>
@@ -162,35 +178,44 @@ async function fetchLevelAndWords() {
     globalLastRule = data.lastRule || "";
     
     document.getElementById('levelBadge').innerText = `Level: ${currentLevel}`;
-    await fetchWordsFromGemini(currentLevel, globalWeakness, globalLastRule);
+    await fetchWordsFromGemini(currentLevel, globalWeakness, globalLastRule, null);
   } catch(e) {
     alert("Error fetching from Sheet: " + e.message);
     showSection('settingsView');
   }
 }
 
-async function fetchWordsFromGemini(level, lastWeakness, lastRule) {
+async function fetchWordsFromGemini(level, lastWeakness, lastRule, customInstruction) {
   const apiKey = localStorage.getItem('GEMINI_KEY');
-  const topics = ["Daily Routine", "Travel & Journey", "Office & Work", "Food & Cooking", "Technology", "Emotions", "Shopping", "Health & Fitness", "Nature"];
-  const randomTopic = topics[Math.floor(Math.random() * topics.length)];
   
-  let instruction = `Teach a completely NEW and progressive grammar rule suitable for Level ${level} (do NOT repeat basics like 'is/am/are' or 'has/have' if already taught).`;
-  
+  let sequenceGuide = `
+  Follow this strict English Grammar Learning Roadmap based on the user's Level (${level}):
+  - Levels 1-5: Basic Building Blocks (Nouns, Pronouns, Articles 'A/An/The').
+  - Levels 6-10: State of Being / Simple Sentences ('Is/Am/Are', 'Was/Were').
+  - Levels 11-15: Possession ('Has/Have/Had').
+  - Levels 16-20: Simple Present Tense (Daily routines, action verbs).
+  - Levels 21-25: Simple Past and Future Tenses.
+  - Levels 26+: Continuous Tenses and Modals.
+  Select the exact step matching Level ${level}. Use very simple, daily-use vocabulary suitable for an Indian beginner. Avoid advanced or GRE words.
+  `;
+
+  let instruction = sequenceGuide;
   if (lastWeakness && lastWeakness.trim() !== "") {
-    instruction = `CRITICAL FOCUS: In the previous test, the user made a mistake regarding: "${lastWeakness}". (Their previous rule was "${lastRule}"). You MUST introduce a fresh concept or rule today that directly targets and fixes this weakness, ensuring zero repetition of the exact old rule title.`;
+    instruction += `\nCRITICAL FIX: User struggled with "${lastWeakness}" in previous rule "${lastRule}". Integrate a quick fix for this into today's lesson.`;
+  }
+  if (customInstruction) {
+    instruction += `\nUSER SPECIAL INSTRUCTION (Override difficulty/focus if requested): ${customInstruction}`;
   }
 
-  const prompt = `Act as an expert, strict yet encouraging English teacher for an Indian student at Level ${level}.
-  Today's topic: "${randomTopic}". Avoid basic words.
-  
+  const prompt = `Act as a supportive, expert English teacher for an Indian student at Level ${level}.
   ${instruction}
   
   Return ONLY a valid JSON object with this exact structure:
   {
-    "grammarTitle": "New rule name",
-    "grammarExplanation": "Hinglish explanation explaining how this fixes past mistakes, with formula and example.",
+    "grammarTitle": "Rule name",
+    "grammarExplanation": "Simple Hinglish explanation matching the sequence level with formula and 1 easy example.",
     "words": [
-      {"word": "word1", "hindi": "hindi meaning", "meaning": "english meaning", "example": "example sentence using the word and new rule"}
+      {"word": "simple_word", "hindi": "hindi meaning", "meaning": "english meaning", "example": "very easy daily life example sentence"}
     ]
   }`;
 
@@ -212,16 +237,16 @@ function renderLesson() {
   if (globalWeakness) {
     banner.innerHTML = `
       <div class="notice-banner">
-        <b>💡 AI Teacher's Note:</b> Kal tumne <b>"${globalWeakness}"</b> mein galti ki thi (Rule: <i>${globalLastRule}</i>). Aaj hum isko dhyan mein rakh kar ek naya aur behtar concept seekh rahe hain taaki yeh galti dobara na ho!
+        <b>💡 AI Teacher's Note:</b> Kal tumne <b>"${globalWeakness}"</b> mein galti ki thi. Aaj hum sequence ko follow karte hue isko sudhar rahe hain!
       </div>
     `;
   } else {
-    banner.innerHTML = `<div class="notice-banner"><b>🚀 Chalo Shuru Karein:</b> Aaj ka naya level aur naya concept taiyar hai!</div>`;
+    banner.innerHTML = `<div class="notice-banner"><b>🚀 Sequential Learning:</b> Level ${currentLevel} ke hisaab se aaj ka aasan rule taiyar hai!</div>`;
   }
 
   const grammarBox = document.getElementById('grammarRuleBox');
   grammarBox.innerHTML = `
-    <div class="grammar-title">📘 Aaj ka Naya Rule: ${todayLesson.grammarTitle}</div>
+    <div class="grammar-title">📘 Aaj ka Rule (Level ${currentLevel}): ${todayLesson.grammarTitle}</div>
     <div class="grammar-desc">${todayLesson.grammarExplanation.replace(/\n/g, '<br>')}</div>
   `;
 
@@ -239,6 +264,28 @@ function renderLesson() {
   showSection('learnView');
 }
 
+function toggleChatBox() {
+  const box = document.getElementById('aiChatBox');
+  box.style.display = box.style.display === 'block' ? 'none' : 'block';
+}
+
+async function sendMsgToAI() {
+  const msg = document.getElementById('userChatMsg').value.trim();
+  if(!msg) return alert("Kuch toh likho bhai!");
+  
+  const replyDiv = document.getElementById('chatReply');
+  replyDiv.innerText = "AI soch raha hai aur lesson change kar raha hai...";
+
+  try {
+    await fetchWordsFromGemini(currentLevel, globalWeakness, globalLastRule, msg);
+    replyDiv.innerText = "✅ Lesson update ho gaya! Upar check karo.";
+    document.getElementById('userChatMsg').value = '';
+    setTimeout(() => { document.getElementById('aiChatBox').style.display = 'none'; replyDiv.innerText = ''; }, 3000);
+  } catch(e) {
+    replyDiv.innerText = "❌ Error: " + e.message;
+  }
+}
+
 function speak(text) {
   const u = new SpeechSynthesisUtterance(text);
   u.lang = 'en-US';
@@ -250,7 +297,7 @@ function startTest() {
   testBox.innerHTML = todayLesson.words.map((item, i) => `
     <div class="quiz-card">
       <p><b>${i+1}:</b> ${item.word} (${item.hindi})</p>
-      <input type="text" id="ans_${i}" placeholder="Naye rule se sentence banao...">
+      <input type="text" id="ans_${i}" placeholder="Sentence banao...">
     </div>
   `).join('');
   showSection('testView');
@@ -270,13 +317,13 @@ async function evaluateTest() {
   const apiKey = localStorage.getItem('GEMINI_KEY');
   const prompt = `Act as an expert English examiner for a Level ${currentLevel} learner. 
   Today they were taught: "${todayLesson.grammarTitle}". 
-  Evaluate their sentences thoroughly.
+  Evaluate simply and fairly.
   Submissions: ${JSON.stringify(submission)}
   
   Return ONLY a valid JSON object:
   - "score": Integer out of 10.
-  - "feedback": Detailed feedback in simple Hinglish explaining mistakes clearly.
-  - "coreWeakness": Identify their main mistake/weakness in 2-4 words (e.g., "Wrong prepositions", "Verb tense error"). If none, "".
+  - "feedback": Detailed feedback in simple Hinglish.
+  - "coreWeakness": Main mistake in 2-4 words, or "".
   - "upgradeLevel": Boolean true if score >= 8.`;
 
   try {
@@ -301,7 +348,7 @@ async function evaluateTest() {
     document.getElementById('scoreText').innerText = `Score: ${result.score} / 10`;
     document.getElementById('decisionText').innerText = result.upgradeLevel 
       ? `🎉 Amazing! Kal se aap Level ${newLevel} par honge!` 
-      : `👍 Achha khrab nahi tha! Kal isko aur sudharenge.`;
+      : `👍 Badhiya koshish thi! Kal aur behtar karenge.`;
     document.getElementById('feedbackText').innerHTML = result.feedback.replace(/\n/g, '<br>');
 
     showSection('resultView');
