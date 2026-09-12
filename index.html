@@ -35,7 +35,7 @@
 
   input[type="text"], input[type="password"] { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; margin-top: 6px; margin-bottom: 15px; outline: none; }
   .quiz-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 14px; margin-bottom: 16px; }
-  .loader { text-align: center; padding: 30px; font-weight: bold; color: var(--primary); }
+  .loader { text-align: center; padding: 50px 20px; font-weight: bold; color: var(--primary); font-size: 16px; }
   .feedback-box { background: #e0f2fe; border-left: 4px solid #0284c7; padding: 15px; border-radius: 6px; margin-top: 15px; font-size: 14px; line-height: 1.6; }
 </style>
 </head>
@@ -64,8 +64,10 @@
     </div>
   </div>
 
-  <div id="loader" class="loader" style="display: none;">
-    AI sequence aur purani galtiyan check kar raha hai... 🤖
+  <!-- Improved Loader Screen -->
+  <div id="loader" class="loader section">
+    <div style="font-size: 40px; margin-bottom: 10px;">🤖</div>
+    AI sequence aur purani galtiyan check kar raha hai,<br>kripya thoda intezaar karein...
   </div>
 
   <div id="doneView" class="section" style="text-align: center; padding: 40px 20px;">
@@ -87,14 +89,14 @@
     </div>
 
     <div class="grammar-box" id="grammarRuleBox"></div>
-    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In words ko is step ke hisaab se seekho:</p>
+    <p style="margin-bottom: 12px; color: var(--muted); font-size: 14px;">In 10 words/examples ko is step ke hisaab se seekho:</p>
     <div id="wordsContainer"></div>
-    <button class="action-btn" onclick="startTest()">Start Today's Test 📝</button>
+    <button class="action-btn" onclick="startTest()">Start Today's Test (10 Questions) 📝</button>
   </div>
 
   <div id="testView" class="section">
     <h4>Daily Knowledge Test</h4>
-    <p style="margin-bottom: 16px; color: var(--muted); font-size: 13px;">Is rule ka use karke in words se sentence banao:</p>
+    <p style="margin-bottom: 16px; color: var(--muted); font-size: 13px;">Is rule ka use karke sabhi 10 words se sentences banao:</p>
     <div id="testContainer"></div>
     <button class="action-btn" id="submitTestBtn" onclick="evaluateTest()">Submit Test to AI 🚀</button>
   </div>
@@ -186,6 +188,7 @@ async function fetchLevelAndWords() {
 }
 
 async function fetchWordsFromGemini(level, lastWeakness, lastRule, customInstruction) {
+  showSection('loader'); // Ensure loader is visible during generation
   const apiKey = localStorage.getItem('GEMINI_KEY');
   
   let sequenceGuide = `
@@ -210,12 +213,14 @@ async function fetchWordsFromGemini(level, lastWeakness, lastRule, customInstruc
   const prompt = `Act as a supportive, expert English teacher for an Indian student at Level ${level}.
   ${instruction}
   
+  IMPORTANT: Provide EXACTLY 10 distinct words or short daily-use phrases in the "words" array so the user gets enough practice.
+  
   Return ONLY a valid JSON object with this exact structure:
   {
     "grammarTitle": "Rule name",
     "grammarExplanation": "Simple Hinglish explanation matching the sequence level with formula and 1 easy example.",
     "words": [
-      {"word": "simple_word", "hindi": "hindi meaning", "meaning": "english meaning", "example": "very easy daily life example sentence"}
+      {"word": "simple_word_or_phrase", "hindi": "hindi meaning", "meaning": "english meaning", "example": "very easy daily life example sentence"}
     ]
   }`;
 
@@ -254,7 +259,7 @@ function renderLesson() {
   container.innerHTML = todayLesson.words.map((item, i) => `
     <div class="word-item">
       <div class="word-header">
-        <span class="word-title">${item.word}</span>
+        <span class="word-title">${i+1}. ${item.word}</span>
         <button class="sound-btn" onclick="speak('${item.word}')">🔊</button>
       </div>
       <div class="word-hindi"><b>अर्थ:</b> ${item.hindi} (${item.meaning})</div>
@@ -296,7 +301,7 @@ function startTest() {
   const testBox = document.getElementById('testContainer');
   testBox.innerHTML = todayLesson.words.map((item, i) => `
     <div class="quiz-card">
-      <p><b>${i+1}:</b> ${item.word} (${item.hindi})</p>
+      <p><b>${i+1}.</b> ${item.word} (${item.hindi})</p>
       <input type="text" id="ans_${i}" placeholder="Sentence banao...">
     </div>
   `).join('');
@@ -306,7 +311,7 @@ function startTest() {
 async function evaluateTest() {
   const btn = document.getElementById('submitTestBtn');
   btn.disabled = true;
-  btn.innerText = "Evaluating...";
+  btn.innerText = "Evaluating 10 answers...";
 
   let submission = [];
   todayLesson.words.forEach((item, i) => {
@@ -317,12 +322,12 @@ async function evaluateTest() {
   const apiKey = localStorage.getItem('GEMINI_KEY');
   const prompt = `Act as an expert English examiner for a Level ${currentLevel} learner. 
   Today they were taught: "${todayLesson.grammarTitle}". 
-  Evaluate simply and fairly.
+  Evaluate all 10 submissions simply and fairly.
   Submissions: ${JSON.stringify(submission)}
   
   Return ONLY a valid JSON object:
-  - "score": Integer out of 10.
-  - "feedback": Detailed feedback in simple Hinglish.
+  - "score": Integer out of 10 based on correct usage.
+  - "feedback": Detailed feedback in simple Hinglish pointing out mistakes clearly.
   - "coreWeakness": Main mistake in 2-4 words, or "".
   - "upgradeLevel": Boolean true if score >= 8.`;
 
